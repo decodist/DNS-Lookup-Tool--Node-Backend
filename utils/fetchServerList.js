@@ -17,8 +17,12 @@ let serverList = [
  */
 
 
-function getRandomServer() {
-	return serverList[serverList.length * Math.random() | 0];
+function getRandomServerSet() {
+	let serverSet = [];
+	serverSet.push(serverList[serverList.length * Math.random() | 0]);
+	serverSet.push(serverList[serverList.length * Math.random() | 0]);
+	console.log("set="+serverSet);
+	return serverSet;
 }
 
-module.exports = { getRandomServer };
+module.exports = { getRandomServerSet };

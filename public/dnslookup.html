@@ -8,8 +8,27 @@ async function getData() {
 	let qdomain = document.getElementById("domainN").value;
 	let qrecordfield = document.getElementById("recordT");
 	let qrecord = qrecordfield.options[qrecordfield.selectedIndex].value;
+	
+	
 	let response = await fetch('/dns?domain='+qdomain+'&type='+qrecord);
 	let json = await response.json();
+	
+	/*
+	async function loadGames() {
+	  try {
+		const response = await fetchWithTimeout('/games', {
+		  timeout: 6000
+		});
+		const games = await response.json();
+		return games;
+	  } catch (error) {
+		// Timeouts if the request takes
+		// longer than 6 seconds
+		console.log(error.name === 'AbortError');
+	  }
+	}
+	 */
+	
 	
 	console.log( json );
 	
