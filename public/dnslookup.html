@@ -1,0 +1,46 @@
+<html>
+<head></head>
+<body>
+
+
+<script>
+async function getData() {
+	let qdomain = document.getElementById("domainN").value;
+	let qrecordfield = document.getElementById("recordT");
+	let qrecord = qrecordfield.options[qrecordfield.selectedIndex].value;
+	let response = await fetch('/dns?domain='+qdomain+'&type='+qrecord);
+	let json = await response.json();
+	
+	console.log( json );
+	
+	let targetDiv1 = document.getElementById('dname');
+	targetDiv1.innerHTML = json[0]['name'];
+	let targetDiv2 = document.getElementById('dnameip');
+	targetDiv2.innerHTML = json[0]['data'];
+}
+</script>
+
+<div class="container">
+    <form action="../dns" method="get" name="thelookup">
+        
+            <label for="domainN">Domain</label>
+            <input id="domainN" name="domain">
+			
+			<label for="recordT">Record</label>
+			<select name="recordT" id="recordT">
+				<option value="A" selected>A</option>
+				<option value="NS">NS</option>
+				<option value="MX">MX</option>
+			</select>
+        
+        <a href="#" onclick="getData()">Submit</a>
+    </form>
+	
+	<div id="dname"></div>
+	<div id="dnameip"></div>
+	
+</div>
+
+
+</body>
+</html>
