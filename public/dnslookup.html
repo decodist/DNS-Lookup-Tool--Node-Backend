@@ -4,35 +4,48 @@
 
 
 <script>
+async function fetchWithTimeout(resource, options = {}) {
+  const { timeout = 5000 } = options;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal
+  });
+  clearTimeout(id);
+  return response;
+}
+
+async function getLocationData(domain, type, loc) {
+	try {
+		const response = await fetchWithTimeout('/dns?domain='+domain+'&type='+type+'&loc='+loc, {
+		  timeout: 5000
+		});
+		let json = await response.json();
+		return json;
+	} catch (error) {
+		console.log('timedout');
+		return JSON.stringify('Timeout');
+	}
+}
+
 async function getData() {
 	let qdomain = document.getElementById("domainN").value;
 	let qrecordfield = document.getElementById("recordT");
 	let qrecord = qrecordfield.options[qrecordfield.selectedIndex].value;
 	
-	let response = await fetch('/dns?domain='+qdomain+'&type='+qrecord);
-	let json = await response.json();
-	
-	/*
-	async function loadGames() {
-	  try {
-		const response = await fetchWithTimeout('/games', {
-		  timeout: 6000
-		});
-		const games = await response.json();
-		return games;
-	  } catch (error) {
-		// Timeouts if the request takes
-		// longer than 6 seconds
-		console.log(error.name === 'AbortError');
-	  }
+	let locations = ['US','AU'];
+	for (let index = 0; index < locations.length; ++index) {
+		let lookupResult = await getLocationData(qdomain, qrecord, locations[index]);
+		console.log(locations[index]+' returned '+lookupResult);
+		let targetDiv1 = document.getElementById(locations[index]+'-result');
+		targetDiv1.innerHTML = lookupResult[0];
 	}
-	 */
 	
 	
-	console.log( json );
 	
-	let targetDiv1 = document.getElementById('dname');
-	targetDiv1.innerHTML = json[0];
+	//let targetDiv1 = document.getElementById('dname');
+	//targetDiv1.innerHTML = json[0];
 	//let targetDiv2 = document.getElementById('dnameip');
 	//targetDiv2.innerHTML = json[0]['data'];
 }
@@ -54,8 +67,12 @@ async function getData() {
         <a href="#" onclick="getData()">Submit!</a>
     </form>
 	
-	<div id="dname"></div>
-	<div id="dnameip"></div>
+	US:
+	<div id="US-result"></div>
+	
+	
+	AUS:
+	<div id="AU-result"></div>
 	
 </div>
 

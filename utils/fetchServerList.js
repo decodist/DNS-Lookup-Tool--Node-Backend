@@ -1,28 +1,25 @@
-let serverList = [
-	'162.243.19.47', //this
-	'9.9.9.9', //that
-	'149.112.112.112',
-	'8.8.8.8'
-];
-
-/*
-
-let serverList = [
+let USserverList = [
 	['USA', 'Mountain View, California', 'Google', '8.8.8.8'],
 	['USA', 'Berkeley, California', 'Quad9', '9.9.9.9'],
+	['USA', 'New York City, New York', 'Digital Ocean', '162.243.19.47']
+];
+
+let AUserverList = [
+	['AUS', 'Sydney, New South Wales', 'TEFINCOM', '103.86.96.100'],
+	['AUS', 'Sydney, New South Wales', 'Telstra', '61.8.0.113']
 ];
 
 
 
- */
-
-
-function getRandomServerSet() {
-	let serverSet = [];
-	serverSet.push(serverList[serverList.length * Math.random() | 0]);
-	serverSet.push(serverList[serverList.length * Math.random() | 0]);
-	console.log("set="+serverSet);
-	return serverSet;
+function getRandomLocationServer(location) {
+	let dnsServer = [];
+	if (location === 'US') {
+		dnsServer.push(USserverList[USserverList.length * Math.random() | 0]);
+	} else if (location === 'AU') {
+		dnsServer.push(AUserverList[AUserverList.length * Math.random() | 0]);
+	}
+	console.log("dnsServer chosen="+dnsServer);
+	return dnsServer;
 }
 
-module.exports = { getRandomServerSet };
+module.exports = { getRandomLocationServer };
