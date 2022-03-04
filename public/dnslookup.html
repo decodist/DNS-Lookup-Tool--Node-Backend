@@ -9,7 +9,6 @@ async function getData() {
 	let qrecordfield = document.getElementById("recordT");
 	let qrecord = qrecordfield.options[qrecordfield.selectedIndex].value;
 	
-	
 	let response = await fetch('/dns?domain='+qdomain+'&type='+qrecord);
 	let json = await response.json();
 	
@@ -33,9 +32,9 @@ async function getData() {
 	console.log( json );
 	
 	let targetDiv1 = document.getElementById('dname');
-	targetDiv1.innerHTML = json[0]['name'];
-	let targetDiv2 = document.getElementById('dnameip');
-	targetDiv2.innerHTML = json[0]['data'];
+	targetDiv1.innerHTML = json[0];
+	//let targetDiv2 = document.getElementById('dnameip');
+	//targetDiv2.innerHTML = json[0]['data'];
 }
 </script>
 
