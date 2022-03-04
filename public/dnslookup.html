@@ -25,7 +25,7 @@ async function getLocationData(domain, type, loc) {
 		return json;
 	} catch (error) {
 		console.log('timedout');
-		return JSON.stringify('Timeout');
+		return JSON.stringify('timedout');
 	}
 }
 
@@ -34,20 +34,20 @@ async function getData() {
 	let qrecordfield = document.getElementById("recordT");
 	let qrecord = qrecordfield.options[qrecordfield.selectedIndex].value;
 	
-	let locations = ['US','AU'];
+	let validLocations = ['US', 'AU', 'NZ', 'UK'];
+	//shuffle
+	let locations = validLocations
+				  .map(value => ({ value, sort: Math.random() }))
+				  .sort((a, b) => a.sort - b.sort)
+				  .map(({ value }) => value)
 	for (let index = 0; index < locations.length; ++index) {
 		let lookupResult = await getLocationData(qdomain, qrecord, locations[index]);
 		console.log(locations[index]+' returned '+lookupResult);
 		let targetDiv1 = document.getElementById(locations[index]+'-result');
-		targetDiv1.innerHTML = lookupResult[0];
+		targetDiv1.innerHTML = "";
+		Object.values(lookupResult).forEach(val => targetDiv1.innerHTML += val + '<br/>');
 	}
 	
-	
-	
-	//let targetDiv1 = document.getElementById('dname');
-	//targetDiv1.innerHTML = json[0];
-	//let targetDiv2 = document.getElementById('dnameip');
-	//targetDiv2.innerHTML = json[0]['data'];
 }
 </script>
 
@@ -70,9 +70,14 @@ async function getData() {
 	US:
 	<div id="US-result"></div>
 	
-	
 	AUS:
 	<div id="AU-result"></div>
+	
+	NZ:
+	<div id="NZ-result"></div>
+	
+	UK:
+	<div id="UK-result"></div>
 	
 </div>
 

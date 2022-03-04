@@ -107,13 +107,18 @@ app.get('/dns', (req, res) => {
 
 	console.log("perform lookup on "+domain+" with type="+type+' and loc='+location);
 
-	let dnsResult = [];
 	//get the dns server to use
 	let server = servers.getRandomLocationServer(location);
 
-	//get the dns server IP address
-	let serverIP = []
-	serverIP.push(server[0][3]);
+	//get the dns server information
+	let serverInfo = {
+		"zone"		: server[0][0],
+		"location"	: server[0][1],
+		"provider"	: server[0][2],
+		"ip"		: server[0][3],
+		"latlong"	: server[0][4],
+		"result"	: ""
+	}
 
 	//create an object which contains all the async lookups
 	let resolverCollection = {};
@@ -121,15 +126,16 @@ app.get('/dns', (req, res) => {
 	//add a new resolver item to the container object
 	resolverCollection['resolver' + location] = new Resolver;
 	//set the dns server to use for the lookup
-	resolverCollection['resolver' + location].setServers(serverIP);
+	resolverCollection['resolver' + location].setServers( [serverInfo.ip] );
 
 	//run the lookup and return the results
 	if (type === 'A') {
 		resolverCollection['resolver' + location].resolve4(domain)
 			.then( function(addresses) {
-					dnsResult.push( JSON.stringify(Object.assign({}, addresses) ));
-					console.log('lookup result='+dnsResult);
-					res.json( dnsResult );
+					//dnsResult.push( JSON.stringify(Object.assign({}, addresses) ));
+					serverInfo.result = addresses;
+					console.log('lookup result='+JSON.stringify(serverInfo));
+					res.json( serverInfo.result );
 			})
 			.catch( function(err) {
 				//interpret the error
@@ -140,17 +146,18 @@ app.get('/dns', (req, res) => {
 	} else if (type === 'NS') {
 		resolverCollection['resolver' + location].resolveNs(domain)
 			.then( function(addresses) {
-					dnsResult.push( JSON.stringify(Object.assign({}, addresses) ));
-					console.log('lookup result='+dnsResult);
-					res.json( dnsResult );
+					serverInfo.result = addresses;
+					console.log('lookup result='+JSON.stringify(serverInfo));
+					res.json( serverInfo.result );
 			})
 			.catch(err => console.log(err))
 	} else if (type === 'MX') {
 		resolverCollection['resolver' + location].resolveMx(domain)
 			.then( function(addresses) {
-					dnsResult.push( JSON.stringify(Object.assign({}, addresses) ));
-					console.log('lookup result='+dnsResult);
-					res.json( dnsResult );
+					//extract nameserver info from the array of objects
+					serverInfo.result = addresses.map(item => item['exchange']);
+					console.log('lookup result='+JSON.stringify(serverInfo));
+					res.json( serverInfo.result );
 			})
 			.catch(err => console.log(err))
 	}
