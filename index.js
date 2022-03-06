@@ -29,95 +29,28 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '/public/dnslookup.html'));
 });
 
-
-//let dnsResults = [];
-/*
-function performLookup(domain, type, attempts=0) {
-		let dnsResult = [];
-		//get the set of dns servers to use
-		let server = servers.getRandomServerSet();
-
-		//create an object which contains all the async lookups
-		let resolverCollection = {};
-
-		//loop through each of the dns servers
-		for (let index = 0; index < server.length; ++index) {
-			let serverItem = [];
-			serverItem.push(server[index]);
-
-			//add a new resolver item to the container object
-			resolverCollection['resolver' + index] = new Resolver;
-			//set the dns server to use for the lookup
-			resolverCollection['resolver' + index].setServers(serverItem);
-
-			//run the lookup and return the results
-			if (type === 'A') {
-				resolverCollection['resolver' + index].resolve4(domain)
-					.then( function(addresses) {
-							//console.log('addresses='+addresses)
-							//console.log(resolverCollection['resolver' + index].getServers());
-							dnsResult.push( JSON.stringify(Object.assign({}, addresses) ));
-							//dnsResult.push(  addresses );
-							console.log(dnsResult);
-					})
-					.catch(err => console.log(err))
-			}
-		}
-		//return JSON.stringify( dnsResult );
-		return dnsResult;
-}
-*/
-/*
-function performLookup(domain, type, attempts=0) {
-	let maxRetries = 2;
-	//set target dns server and run the query
-	let server = servers.getRandomServerSet();
-
-	for (let index = 0; index < server.length; ++index) {
-		let serverItem = [];
-		serverItem.push(server[index]);
-
-		//console.log("index="+index);
-		//console.log("server="+serverItem);
-
-		//this doesn't change its value  ...
-		dns.setServers( serverItem );
-
-
-		dns.resolve(domain, type, function (error, addresses) {
-			console.log("DNS servers 1: ", dns.getServers());
-			if (error && attempts <= maxRetries) {
-				console.log("Error: ", error);  // error or null
-				performLookup(domain, type, attempts++);	//retry
-			} else if (error && attempts > maxRetries) {
-				console.log("Gave up");
-			} else {
-				console.log("DNS servers: ", dns.getServers());  // [ '8.8.8.8' ]
-				console.log(domain + " resolves to: ", addresses);  // [ '192.168.0.10' ]
-			}
-		});
-	}
-}
-*/
-
+// main api endpoint
 app.get('/dns', (req, res) => {
+
+	req.setTimeout(5000);
+
 	let domain = req.query.domain;
 	let type = req.query.type;
 	let location = req.query.loc;
 
-	console.log("perform lookup on "+domain+" with type="+type+' and loc='+location);
+	console.log("perform lookup on " + domain + " with type=" + type + ' and loc=' + location);
 
 	//get the dns server to use
 	let server = servers.getRandomLocationServer(location);
 
 	//get the dns server information
-	let serverInfo = {
-		"zone"		: server[0][0],
-		"location"	: server[0][1],
-		"provider"	: server[0][2],
-		"ip"		: server[0][3],
-		"latlong"	: server[0][4],
-		"result"	: ""
+	let serverResult = {
+		"zone": server[0][0],
+		"location": server[0][1],
+		"provider": server[0][2],
+		"ip": server[0][3],
+		"latLong": server[0][4],
+		"answer": ""
 	}
 
 	//create an object which contains all the async lookups
@@ -126,106 +59,51 @@ app.get('/dns', (req, res) => {
 	//add a new resolver item to the container object
 	resolverCollection['resolver' + location] = new Resolver;
 	//set the dns server to use for the lookup
-	resolverCollection['resolver' + location].setServers( [serverInfo.ip] );
+	resolverCollection['resolver' + location].setServers([serverResult.ip]);
+
+	function errorH(err){
+		//interpret the error
+		serverResult.answer = JSON.parse(JSON.stringify(err));
+		res.json(serverResult);
+	}
 
 	//run the lookup and return the results
 	if (type === 'A') {
 		resolverCollection['resolver' + location].resolve4(domain)
-			.then( function(addresses) {
-					//dnsResult.push( JSON.stringify(Object.assign({}, addresses) ));
-					serverInfo.result = addresses;
-					console.log('lookup result='+JSON.stringify(serverInfo));
-					res.json( serverInfo.result );
+			.then(function (addresses) {
+				serverResult.answer = addresses;
+				console.log('lookup result=' + JSON.stringify(serverResult));
+				res.json(serverResult);
 			})
-			.catch( function(err) {
-				//interpret the error
-				let errorResponse = JSON.parse( JSON.stringify(err) );
-				console.log(errorResponse);
-				res.json( errorResponse.code );
+			.catch(function (err) {
+				errorH(err);
 			})
 	} else if (type === 'NS') {
 		resolverCollection['resolver' + location].resolveNs(domain)
-			.then( function(addresses) {
-					serverInfo.result = addresses;
-					console.log('lookup result='+JSON.stringify(serverInfo));
-					res.json( serverInfo.result );
+			.then(function (addresses) {
+				serverResult.answer = addresses;
+				console.log('lookup result=' + JSON.stringify(serverResult));
+				res.json(serverResult);
 			})
-			.catch(err => console.log(err))
+			.catch(function (err) {
+				errorH(err);
+			})
 	} else if (type === 'MX') {
 		resolverCollection['resolver' + location].resolveMx(domain)
-			.then( function(addresses) {
-					//extract nameserver info from the array of objects
-					serverInfo.result = addresses.map(item => item['exchange']);
-					console.log('lookup result='+JSON.stringify(serverInfo));
-					res.json( serverInfo.result );
+			.then(function (addresses) {
+				//extract nameserver info from the array of objects
+				serverResult.answer = addresses.map(item => item['exchange']);
+				console.log('lookup result=' + JSON.stringify(serverResult));
+				res.json(serverResult);
 			})
-			.catch(err => console.log(err))
+			.catch(function (err) {
+				errorH(err);
+			})
 	}
-
-	/*
-	//loop through each of the dns servers
-	for (let index = 0; index < server.length; ++index) {
-		let serverItem = [];
-		serverItem.push(server[index]);
-
-		//add a new resolver item to the container object
-		resolverCollection['resolver' + index] = new Resolver;
-		//set the dns server to use for the lookup
-		resolverCollection['resolver' + index].setServers(serverItem);
-
-		//run the lookup and return the results
-		if (type === 'A') {
-			resolverCollection['resolver' + index].resolve4(domain)
-				.then( function(addresses) {
-						//console.log('addresses='+addresses)
-						//console.log(resolverCollection['resolver' + index].getServers());
-						dnsResult.push( JSON.stringify(Object.assign({}, addresses) ));
-						//dnsResult.push(  addresses );
-						console.log(dnsResult);
-						res.json( dnsResult );
-				})
-				.catch(err => console.log(err))
-		}
-
-	}
-	*/
-
-	//return JSON.stringify( dnsResult );
-	//return dnsResult;
-
-
-	//res.json( dnsResult );
-
-
-	//let stub = JSON.parse("{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"decodist.com.\",\"type\":15}],\"Authority\":[{\"name\":\"decodist.com.\",\"type\":6,\"TTL\":1800,\"data\":\"etta.ns.cloudflare.com. dns.cloudflare.com. 2271645155 10000 2400 604800 3600\"}],\"Comment\":\"Response from 2a06:98c1:50::ac40:2173.\"}")
-	//res.json( stub["Authority"] );
-
-	//res.json( lookupResult );
-
-	//this is google's implementation
-	/* https.get(server+'?name='+domain+'&type='+type, resp => {
-        resp.on('data', (d) => {
-			dnsResults = JSON.parse(d);
-			if (type !== 'MX') {
-				res.json(dnsResults['Answer']);
-			} else {
-				res.json(dnsResults['Authority']);
-			}
-
-    	});
-	});
-
-	 */
-});
-
-// front end routes
-/*
-app.get('/lookup', function(req, res) {
-  res.sendFile(path.join(__dirname, '/public/dnslookup.html'));
-});
- */
+})
 
 // status message when server started
 app.listen(port, () => console.log(`Node app now listening on port ${port}!`))
+
 
 

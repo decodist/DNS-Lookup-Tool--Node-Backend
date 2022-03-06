@@ -4,32 +4,55 @@
 
 
 <script>
-async function fetchWithTimeout(resource, options = {}) {
-  const { timeout = 5000 } = options;
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  const response = await fetch(resource, {
-    ...options,
-    signal: controller.signal
-  });
-  clearTimeout(id);
-  return response;
-}
 
-async function getLocationData(domain, type, loc) {
+const promiseWithTimeout = promise => {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error('Request timed out'));
+    }, 4000);
+  })
+  return {
+    promiseOrTimeout: Promise.race([promise, timeoutPromise]),
+    timeoutId,
+  };
+};
+
+const fetchData = async url => {
+	const { promiseOrTimeout, timeoutId } = promiseWithTimeout(fetch(url));
 	try {
-		const response = await fetchWithTimeout('/dns?domain='+domain+'&type='+type+'&loc='+loc, {
-		  timeout: 5000
-		});
-		let json = await response.json();
-		return json;
+		const result = await promiseOrTimeout;
+		return await result.json();
 	} catch (error) {
-		console.log('timedout');
-		return JSON.stringify('timedout');
+		console.log('fetchDataError='+error);
+		return JSON.parse("{\"error\":\""+error+"\"}");
+	} finally {
+		clearTimeout(timeoutId);
+	}
+};
+
+async function getAPIData(domain, type, location) {
+	//reset page
+	let targetDiv1 = document.getElementById(location+'-result-location');
+	let targetDiv2 = document.getElementById(location+'-result-provider');
+	let targetDiv3 = document.getElementById(location+'-result-answer');
+	targetDiv1.innerHTML = targetDiv2.innerHTML = targetDiv3.innerHTML = "";
+	
+	//get new data
+	let lookupResult = await fetchData('/dns?domain='+domain+'&type='+type+'&loc='+location);
+	
+	console.log(location+' returned '+JSON.stringify(lookupResult));
+	
+	if (!lookupResult.error) {
+		targetDiv1.innerHTML = lookupResult['location'];
+		targetDiv2.innerHTML = lookupResult['provider'];
+		Object.values(lookupResult['answer']).forEach(val => targetDiv3.innerHTML += val + '<br/>');
+	} else {
+		targetDiv3.innerHTML = 'Error Happened ';
 	}
 }
 
-async function getData() {
+async function processForm() {
 	let qdomain = document.getElementById("domainN").value;
 	let qrecordfield = document.getElementById("recordT");
 	let qrecord = qrecordfield.options[qrecordfield.selectedIndex].value;
@@ -41,13 +64,8 @@ async function getData() {
 				  .sort((a, b) => a.sort - b.sort)
 				  .map(({ value }) => value)
 	for (let index = 0; index < locations.length; ++index) {
-		let lookupResult = await getLocationData(qdomain, qrecord, locations[index]);
-		console.log(locations[index]+' returned '+lookupResult);
-		let targetDiv1 = document.getElementById(locations[index]+'-result');
-		targetDiv1.innerHTML = "";
-		Object.values(lookupResult).forEach(val => targetDiv1.innerHTML += val + '<br/>');
+		getAPIData(qdomain, qrecord, locations[index]);
 	}
-	
 }
 </script>
 
@@ -64,20 +82,36 @@ async function getData() {
 				<option value="MX">MX</option>
 			</select>
         
-        <a href="#" onclick="getData()">Submit!</a>
+        <a href="#" onclick="processForm()">Submit!</a>
     </form>
 	
-	US:
-	<div id="US-result"></div>
+	------US:
+	<div id="US-result">
+		<div id="US-result-location"></div>
+		<div id="US-result-provider"></div>
+		<div id="US-result-answer"></div>
+	</div>
 	
-	AUS:
-	<div id="AU-result"></div>
+	------AUS:
+	<div id="AU-result">
+		<div id="AU-result-location"></div>
+		<div id="AU-result-provider"></div>
+		<div id="AU-result-answer"></div>
+	</div>
 	
-	NZ:
-	<div id="NZ-result"></div>
+	------NZ:
+	<div id="NZ-result">
+		<div id="NZ-result-location"></div>
+		<div id="NZ-result-provider"></div>
+		<div id="NZ-result-answer"></div>
+	</div>
 	
-	UK:
-	<div id="UK-result"></div>
+	------UK:
+	<div id="UK-result">
+		<div id="UK-result-location"></div>
+		<div id="UK-result-provider"></div>
+		<div id="UK-result-answer"></div>
+	</div>
 	
 </div>
 
