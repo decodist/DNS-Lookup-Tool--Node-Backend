@@ -10,6 +10,8 @@ const path = require('path');
 //const dns = require('dns');
 const { Resolver } = require('dns').promises;
 
+process.env.RES_OPTIONS='ndots:3 retrans:1000 retry:3 rotate timeout:2000';
+
 // use CORS
 app.use(cors());
 
@@ -32,7 +34,7 @@ app.get('/', (req, res) => {
 // main api endpoint
 app.get('/dns', (req, res) => {
 
-	req.setTimeout(5000);
+	res.setTimeout(5000);
 
 	let domain = req.query.domain;
 	let type = req.query.type;

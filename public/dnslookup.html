@@ -36,6 +36,7 @@ async function getAPIData(domain, type, location) {
 	let targetDiv1 = document.getElementById(location+'-result-location');
 	let targetDiv2 = document.getElementById(location+'-result-provider');
 	let targetDiv3 = document.getElementById(location+'-result-answer');
+	let targetDiv4 = document.getElementById(location+'-result-latlong');
 	targetDiv1.innerHTML = targetDiv2.innerHTML = targetDiv3.innerHTML = "";
 	
 	//get new data
@@ -47,6 +48,7 @@ async function getAPIData(domain, type, location) {
 		targetDiv1.innerHTML = lookupResult['location'];
 		targetDiv2.innerHTML = lookupResult['provider'];
 		Object.values(lookupResult['answer']).forEach(val => targetDiv3.innerHTML += val + '<br/>');
+		targetDiv4.innerHTML = lookupResult['latLong'];
 	} else {
 		targetDiv3.innerHTML = 'Error Happened ';
 	}
@@ -90,6 +92,7 @@ async function processForm() {
 		<div id="US-result-location"></div>
 		<div id="US-result-provider"></div>
 		<div id="US-result-answer"></div>
+		<div id="US-result-latlong"></div>
 	</div>
 	
 	------AUS:
@@ -97,6 +100,7 @@ async function processForm() {
 		<div id="AU-result-location"></div>
 		<div id="AU-result-provider"></div>
 		<div id="AU-result-answer"></div>
+		<div id="AU-result-latlong"></div>
 	</div>
 	
 	------NZ:
@@ -104,6 +108,7 @@ async function processForm() {
 		<div id="NZ-result-location"></div>
 		<div id="NZ-result-provider"></div>
 		<div id="NZ-result-answer"></div>
+		<div id="NZ-result-latlong"></div>
 	</div>
 	
 	------UK:
@@ -111,6 +116,7 @@ async function processForm() {
 		<div id="UK-result-location"></div>
 		<div id="UK-result-provider"></div>
 		<div id="UK-result-answer"></div>
+		<div id="UK-result-latlong"></div>
 	</div>
 	
 </div>
