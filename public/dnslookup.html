@@ -50,7 +50,7 @@ async function getAPIData(domain, type, location) {
 		Object.values(lookupResult['answer']).forEach(val => targetDiv3.innerHTML += val + '<br/>');
 		targetDiv4.innerHTML = lookupResult['latLong'];
 	} else {
-		targetDiv3.innerHTML = 'Error Happened ';
+		targetDiv3.innerHTML = 'Timeout';
 	}
 }
 

@@ -2,20 +2,18 @@
 const express = require('express')
 const app = express();
 const port = 3000;
+
 // init other modules
 const bodyParser = require('body-parser');
 const cors = require('cors');
-//const https = require('https');
 const path = require('path');
-//const dns = require('dns');
 const { Resolver } = require('dns').promises;
 
+//set some deep DNS lookup settings to prevent timeouts
 process.env.RES_OPTIONS='ndots:3 retrans:1000 retry:3 rotate timeout:2000';
-
-// use CORS
 app.use(cors());
 
-// Configuring body parser middleware
+// Configure body parser middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -27,8 +25,7 @@ const servers = require("./utils/fetchServerList.js");
 
 // GET home endpoint
 app.get('/', (req, res) => {
-	//todo send a dynamic security code as well
-    res.sendFile(path.join(__dirname, '/public/dnslookup.html'));
+	res.sendFile(path.join(__dirname, '/public/dnslookup.html'));
 });
 
 // main api endpoint
@@ -39,8 +36,6 @@ app.get('/dns', (req, res) => {
 	let domain = req.query.domain;
 	let type = req.query.type;
 	let location = req.query.loc;
-
-	console.log("perform lookup on " + domain + " with type=" + type + ' and loc=' + location);
 
 	//get the dns server to use
 	let server = servers.getRandomLocationServer(location);
@@ -74,7 +69,6 @@ app.get('/dns', (req, res) => {
 		resolverCollection['resolver' + location].resolve4(domain)
 			.then(function (addresses) {
 				serverResult.answer = addresses;
-				console.log('lookup result=' + JSON.stringify(serverResult));
 				res.json(serverResult);
 			})
 			.catch(function (err) {
@@ -84,7 +78,6 @@ app.get('/dns', (req, res) => {
 		resolverCollection['resolver' + location].resolveNs(domain)
 			.then(function (addresses) {
 				serverResult.answer = addresses;
-				console.log('lookup result=' + JSON.stringify(serverResult));
 				res.json(serverResult);
 			})
 			.catch(function (err) {
@@ -95,7 +88,6 @@ app.get('/dns', (req, res) => {
 			.then(function (addresses) {
 				//extract nameserver info from the array of objects
 				serverResult.answer = addresses.map(item => item['exchange']);
-				console.log('lookup result=' + JSON.stringify(serverResult));
 				res.json(serverResult);
 			})
 			.catch(function (err) {
