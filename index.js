@@ -23,14 +23,13 @@ app.use(express.static('public'));
 // make helper functions available
 const servers = require("./utils/fetchServerList.js");
 
-// GET home endpoint
+// GET home endpoint (used for testing)
 app.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, '/public/dnslookup.html'));
 });
-
+ 
 // main api endpoint
 app.get('/dns', (req, res) => {
-
 	res.setTimeout(5000);
 
 	let domain = req.query.domain;
@@ -98,6 +97,3 @@ app.get('/dns', (req, res) => {
 
 // status message when server started
 app.listen(port, () => console.log(`Node app now listening on port ${port}!`))
-
-
-
